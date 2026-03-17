@@ -33,6 +33,10 @@ spring:
     init:
       mode: always
 
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  model: ${OPENAI_MODEL:gpt-4o-mini}
+
 management:
   endpoints:
     web:
