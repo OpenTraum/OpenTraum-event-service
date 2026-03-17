@@ -71,3 +71,12 @@ CREATE TABLE IF NOT EXISTS seats (
 CREATE INDEX IF NOT EXISTS idx_seats_schedule ON seats(schedule_id);
 CREATE INDEX IF NOT EXISTS idx_seats_schedule_zone ON seats(schedule_id, zone);
 CREATE INDEX IF NOT EXISTS idx_seats_status ON seats(status);
+
+-- 공연장 프리셋 (venues)
+CREATE TABLE IF NOT EXISTS venues (
+    id          BIGSERIAL       PRIMARY KEY,
+    name        VARCHAR(100)    NOT NULL UNIQUE,
+    total_seats INT             NOT NULL,
+    zone_config JSONB,
+    created_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
+);
