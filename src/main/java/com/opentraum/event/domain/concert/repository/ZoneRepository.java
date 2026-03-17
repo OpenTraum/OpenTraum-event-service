@@ -14,4 +14,6 @@ public interface ZoneRepository extends ReactiveCrudRepository<Zone, Long> {
     Mono<Zone> findByScheduleIdAndZone(Long scheduleId, String zone);
 
     Mono<Zone> findByScheduleIdAndGradeAndZone(Long scheduleId, String grade, String zone);
+
+    Mono<Void> deleteByScheduleId(Long scheduleId);
 }

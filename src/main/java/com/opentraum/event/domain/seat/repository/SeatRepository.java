@@ -36,4 +36,9 @@ public interface SeatRepository extends ReactiveCrudRepository<Seat, Long> {
 
     @Query("SELECT grade, COUNT(*) as count FROM seats WHERE schedule_id = :scheduleId AND status = 'AVAILABLE' GROUP BY grade")
     Flux<GradeSeatCount> findAvailableSeatCountByScheduleIdGroupByGrade(@Param("scheduleId") Long scheduleId);
+
+    @Query("SELECT grade, COUNT(*) as count FROM seats WHERE schedule_id = :scheduleId AND status = 'SOLD' GROUP BY grade")
+    Flux<GradeSeatCount> findSoldSeatCountByScheduleIdGroupByGrade(@Param("scheduleId") Long scheduleId);
+
+    Mono<Void> deleteByScheduleId(Long scheduleId);
 }
