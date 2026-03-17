@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS schedules (
     ticket_open_at  TIMESTAMP       NOT NULL,
     ticket_close_at TIMESTAMP       NOT NULL,
     status          VARCHAR(20)     NOT NULL DEFAULT 'UPCOMING',
+    track_policy    VARCHAR(20)     NOT NULL DEFAULT 'DUAL_TRACK',
     created_at      TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
 );
 
