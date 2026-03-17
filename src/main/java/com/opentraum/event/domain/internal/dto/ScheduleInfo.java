@@ -13,6 +13,7 @@ public class ScheduleInfo {
     private Long concertId;
     private LocalDateTime ticketOpenAt;
     private String status;
+    private String trackPolicy;
 
     public static ScheduleInfo from(Schedule schedule) {
         return ScheduleInfo.builder()
@@ -20,6 +21,7 @@ public class ScheduleInfo {
                 .concertId(schedule.getConcertId())
                 .ticketOpenAt(schedule.getTicketOpenAt())
                 .status(schedule.getStatus())
+                .trackPolicy(schedule.getTrackPolicy())
                 .build();
     }
 }

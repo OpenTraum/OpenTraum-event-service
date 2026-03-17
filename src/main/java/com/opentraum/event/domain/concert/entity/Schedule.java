@@ -29,5 +29,7 @@ public class Schedule {
 
     private String status;
 
+    private String trackPolicy;
+
     private LocalDateTime createdAt;
 }
