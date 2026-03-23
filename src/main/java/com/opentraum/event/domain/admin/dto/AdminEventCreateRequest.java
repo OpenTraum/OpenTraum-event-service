@@ -30,8 +30,6 @@ public class AdminEventCreateRequest {
     private LocalDateTime ticketCloseAt;
     @NotBlank
     private String trackPolicy;
-    @NotBlank
-    private String tenantId;
 
     @NotEmpty
     private List<GradeInput> grades;

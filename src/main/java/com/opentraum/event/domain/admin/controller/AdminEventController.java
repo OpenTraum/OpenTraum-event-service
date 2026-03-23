@@ -31,46 +31,56 @@ public class AdminEventController {
 
     @Operation(summary = "이벤트 생성")
     @PostMapping
-    public Mono<ResponseEntity<AdminEventResponse>> createEvent(@Valid @RequestBody AdminEventCreateRequest request) {
-        return adminEventService.createEvent(request)
+    public Mono<ResponseEntity<AdminEventResponse>> createEvent(
+            @RequestHeader("X-Tenant-Id") String tenantId,
+            @Valid @RequestBody AdminEventCreateRequest request) {
+        return adminEventService.createEvent(tenantId, request)
                 .map(ResponseEntity::ok);
     }
 
     @Operation(summary = "이벤트 목록 조회")
     @GetMapping
-    public Mono<ResponseEntity<List<AdminEventResponse>>> listEvents() {
-        return adminEventService.listEvents()
+    public Mono<ResponseEntity<List<AdminEventResponse>>> listEvents(
+            @RequestHeader("X-Tenant-Id") String tenantId) {
+        return adminEventService.listEvents(tenantId)
                 .collectList()
                 .map(ResponseEntity::ok);
     }
 
     @Operation(summary = "이벤트 상세 조회")
     @GetMapping("/{scheduleId}")
-    public Mono<ResponseEntity<AdminEventResponse>> getEvent(@PathVariable Long scheduleId) {
-        return adminEventService.getEvent(scheduleId)
+    public Mono<ResponseEntity<AdminEventResponse>> getEvent(
+            @RequestHeader("X-Tenant-Id") String tenantId,
+            @PathVariable Long scheduleId) {
+        return adminEventService.getEvent(tenantId, scheduleId)
                 .map(ResponseEntity::ok);
     }
 
     @Operation(summary = "이벤트 수정")
     @PutMapping("/{scheduleId}")
     public Mono<ResponseEntity<AdminEventResponse>> updateEvent(
+            @RequestHeader("X-Tenant-Id") String tenantId,
             @PathVariable Long scheduleId,
             @Valid @RequestBody AdminEventCreateRequest request) {
-        return adminEventService.updateEvent(scheduleId, request)
+        return adminEventService.updateEvent(tenantId, scheduleId, request)
                 .map(ResponseEntity::ok);
     }
 
     @Operation(summary = "이벤트 삭제")
     @DeleteMapping("/{scheduleId}")
-    public Mono<ResponseEntity<Void>> deleteEvent(@PathVariable Long scheduleId) {
-        return adminEventService.deleteEvent(scheduleId)
+    public Mono<ResponseEntity<Void>> deleteEvent(
+            @RequestHeader("X-Tenant-Id") String tenantId,
+            @PathVariable Long scheduleId) {
+        return adminEventService.deleteEvent(tenantId, scheduleId)
                 .then(Mono.just(ResponseEntity.noContent().<Void>build()));
     }
 
     @Operation(summary = "판매 현황 대시보드")
     @GetMapping("/{scheduleId}/dashboard")
-    public Mono<ResponseEntity<AdminDashboardResponse>> getDashboard(@PathVariable Long scheduleId) {
-        return adminEventService.getDashboard(scheduleId)
+    public Mono<ResponseEntity<AdminDashboardResponse>> getDashboard(
+            @RequestHeader("X-Tenant-Id") String tenantId,
+            @PathVariable Long scheduleId) {
+        return adminEventService.getDashboard(tenantId, scheduleId)
                 .map(ResponseEntity::ok);
     }
 }
