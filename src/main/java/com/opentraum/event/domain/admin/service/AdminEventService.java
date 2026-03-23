@@ -31,12 +31,12 @@ public class AdminEventService {
     private final ZoneRepository zoneRepository;
     private final SeatRepository seatRepository;
 
-    public Mono<AdminEventResponse> createEvent(AdminEventCreateRequest request) {
+    public Mono<AdminEventResponse> createEvent(String tenantId, AdminEventCreateRequest request) {
         Concert concert = Concert.builder()
                 .title(request.getTitle())
                 .artist(request.getArtist())
                 .venue(request.getVenue())
-                .tenantId(request.getTenantId())
+                .tenantId(tenantId)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -110,20 +110,22 @@ public class AdminEventService {
                 .doOnSuccess(r -> log.info("이벤트 생성 완료: concertId={}, scheduleId={}", r.getConcertId(), r.getScheduleId()));
     }
 
-    public Mono<AdminEventResponse> getEvent(Long scheduleId) {
+    public Mono<AdminEventResponse> getEvent(String tenantId, Long scheduleId) {
         return scheduleRepository.findById(scheduleId)
                 .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND)))
                 .flatMap(schedule -> concertRepository.findById(schedule.getConcertId())
+                        .filter(concert -> tenantId.equals(concert.getTenantId()))
+                        .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND)))
                         .flatMap(concert -> Mono.zip(
                                 gradeRepository.findByScheduleId(scheduleId).collectList(),
                                 zoneRepository.findByScheduleId(scheduleId).collectList()
                         ).map(tuple -> buildResponse(concert, schedule, tuple.getT1(), tuple.getT2()))));
     }
 
-    public Flux<AdminEventResponse> listEvents() {
-        return scheduleRepository.findAll()
-                .flatMap(schedule -> concertRepository.findById(schedule.getConcertId())
-                        .map(concert -> AdminEventResponse.builder()
+    public Flux<AdminEventResponse> listEvents(String tenantId) {
+        return concertRepository.findByTenantId(tenantId)
+                .flatMap(concert -> scheduleRepository.findByConcertId(concert.getId())
+                        .map(schedule -> AdminEventResponse.builder()
                                 .concertId(concert.getId())
                                 .scheduleId(schedule.getId())
                                 .title(concert.getTitle())
@@ -139,10 +141,12 @@ public class AdminEventService {
                                 .build()));
     }
 
-    public Mono<AdminEventResponse> updateEvent(Long scheduleId, AdminEventCreateRequest request) {
+    public Mono<AdminEventResponse> updateEvent(String tenantId, Long scheduleId, AdminEventCreateRequest request) {
         return scheduleRepository.findById(scheduleId)
                 .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND)))
                 .flatMap(schedule -> concertRepository.findById(schedule.getConcertId())
+                        .filter(concert -> tenantId.equals(concert.getTenantId()))
+                        .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND)))
                         .flatMap(concert -> {
                             concert.setTitle(request.getTitle());
                             concert.setArtist(request.getArtist());
@@ -160,24 +164,29 @@ public class AdminEventService {
                                     scheduleRepository.save(schedule)
                             );
                         })
-                        .flatMap(tuple -> getEvent(scheduleId)));
+                        .flatMap(tuple -> getEvent(tenantId, scheduleId)));
     }
 
-    public Mono<Void> deleteEvent(Long scheduleId) {
-        return scheduleRepository.findById(scheduleId)
-                .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND)))
-                .flatMap(schedule -> seatRepository.deleteByScheduleId(scheduleId)
-                        .then(zoneRepository.deleteByScheduleId(scheduleId))
-                        .then(gradeRepository.deleteByScheduleId(scheduleId))
-                        .then(scheduleRepository.deleteById(scheduleId))
-                        .then(concertRepository.deleteById(schedule.getConcertId())))
-                .doOnSuccess(v -> log.info("이벤트 삭제 완료: scheduleId={}", scheduleId));
-    }
-
-    public Mono<AdminDashboardResponse> getDashboard(Long scheduleId) {
+    public Mono<Void> deleteEvent(String tenantId, Long scheduleId) {
         return scheduleRepository.findById(scheduleId)
                 .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND)))
                 .flatMap(schedule -> concertRepository.findById(schedule.getConcertId())
+                        .filter(concert -> tenantId.equals(concert.getTenantId()))
+                        .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND)))
+                        .then(seatRepository.deleteByScheduleId(scheduleId)
+                        .then(zoneRepository.deleteByScheduleId(scheduleId))
+                        .then(gradeRepository.deleteByScheduleId(scheduleId))
+                        .then(scheduleRepository.deleteById(scheduleId))
+                        .then(concertRepository.deleteById(schedule.getConcertId()))))
+                .doOnSuccess(v -> log.info("이벤트 삭제 완료: scheduleId={}", scheduleId));
+    }
+
+    public Mono<AdminDashboardResponse> getDashboard(String tenantId, Long scheduleId) {
+        return scheduleRepository.findById(scheduleId)
+                .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND)))
+                .flatMap(schedule -> concertRepository.findById(schedule.getConcertId())
+                        .filter(concert -> tenantId.equals(concert.getTenantId()))
+                        .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND)))
                         .flatMap(concert -> Mono.zip(
                                 seatRepository.findSeatCountByScheduleIdGroupByGrade(scheduleId).collectList(),
                                 seatRepository.findSoldSeatCountByScheduleIdGroupByGrade(scheduleId).collectList()
