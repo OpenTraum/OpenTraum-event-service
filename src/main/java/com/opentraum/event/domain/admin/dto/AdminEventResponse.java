@@ -22,6 +22,7 @@ public class AdminEventResponse {
     private LocalDateTime ticketOpenAt;
     private LocalDateTime ticketCloseAt;
     private String trackPolicy;
+    private String imageUrl;
     private String status;
     private List<GradeInfo> grades;
     private List<ZoneInfo> zones;

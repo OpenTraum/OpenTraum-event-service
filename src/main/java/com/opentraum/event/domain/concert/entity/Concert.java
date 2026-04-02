@@ -25,6 +25,10 @@ public class Concert {
 
     private String tenantId;
 
+    private String organizerName;
+
+    private String imageUrl;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

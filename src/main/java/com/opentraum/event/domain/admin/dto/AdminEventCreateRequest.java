@@ -31,6 +31,9 @@ public class AdminEventCreateRequest {
     @NotBlank
     private String trackPolicy;
 
+    private String imageUrl;
+    private String organizerName;
+
     @NotEmpty
     private List<GradeInput> grades;
     @NotEmpty

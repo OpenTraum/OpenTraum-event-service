@@ -37,6 +37,8 @@ public class AdminEventService {
                 .artist(request.getArtist())
                 .venue(request.getVenue())
                 .tenantId(tenantId)
+                .organizerName(request.getOrganizerName())
+                .imageUrl(request.getImageUrl())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -132,6 +134,7 @@ public class AdminEventService {
                                 .artist(concert.getArtist())
                                 .venue(concert.getVenue())
                                 .tenantId(concert.getTenantId())
+                                .imageUrl(concert.getImageUrl())
                                 .dateTime(schedule.getDateTime())
                                 .totalSeats(schedule.getTotalSeats())
                                 .ticketOpenAt(schedule.getTicketOpenAt())
@@ -144,13 +147,20 @@ public class AdminEventService {
     public Mono<AdminEventResponse> updateEvent(String tenantId, Long scheduleId, AdminEventCreateRequest request) {
         return scheduleRepository.findById(scheduleId)
                 .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND)))
-                .flatMap(schedule -> concertRepository.findById(schedule.getConcertId())
+                .flatMap(schedule -> {
+                    // 예매 오픈 30분 전부터 수정 불가
+                    if (schedule.getTicketOpenAt() != null
+                            && LocalDateTime.now().isAfter(schedule.getTicketOpenAt().minusMinutes(30))) {
+                        return Mono.error(new BusinessException(ErrorCode.EVENT_EDIT_LOCKED));
+                    }
+                    return concertRepository.findById(schedule.getConcertId())
                         .filter(concert -> tenantId.equals(concert.getTenantId()))
                         .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.SCHEDULE_NOT_FOUND)))
                         .flatMap(concert -> {
                             concert.setTitle(request.getTitle());
                             concert.setArtist(request.getArtist());
                             concert.setVenue(request.getVenue());
+                            concert.setImageUrl(request.getImageUrl());
                             concert.setUpdatedAt(LocalDateTime.now());
 
                             schedule.setDateTime(request.getDateTime());
@@ -164,7 +174,8 @@ public class AdminEventService {
                                     scheduleRepository.save(schedule)
                             );
                         })
-                        .flatMap(tuple -> getEvent(tenantId, scheduleId)));
+                        .flatMap(tuple -> getEvent(tenantId, scheduleId));
+                });
     }
 
     public Mono<Void> deleteEvent(String tenantId, Long scheduleId) {
@@ -231,6 +242,7 @@ public class AdminEventService {
                 .artist(concert.getArtist())
                 .venue(concert.getVenue())
                 .tenantId(concert.getTenantId())
+                .imageUrl(concert.getImageUrl())
                 .dateTime(schedule.getDateTime())
                 .totalSeats(schedule.getTotalSeats())
                 .ticketOpenAt(schedule.getTicketOpenAt())

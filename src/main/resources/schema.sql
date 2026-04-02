@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS concerts (
     artist      VARCHAR(255),
     venue       VARCHAR(255)    NOT NULL,
     tenant_id   VARCHAR(64)     NOT NULL,
+    organizer_name VARCHAR(100),
+    image_url   TEXT,
     created_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
 );
