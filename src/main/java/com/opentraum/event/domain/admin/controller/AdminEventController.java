@@ -2,6 +2,7 @@ package com.opentraum.event.domain.admin.controller;
 
 import com.opentraum.event.domain.admin.dto.*;
 import com.opentraum.event.domain.admin.service.AdminEventService;
+import com.opentraum.event.domain.admin.service.AdminInsightService;
 import com.opentraum.event.domain.admin.service.AiEventGenerateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,6 +22,7 @@ public class AdminEventController {
 
     private final AiEventGenerateService aiEventGenerateService;
     private final AdminEventService adminEventService;
+    private final AdminInsightService adminInsightService;
 
     @Operation(summary = "AI 이벤트 구성 자동 생성")
     @PostMapping("/ai-generate")
@@ -81,6 +83,15 @@ public class AdminEventController {
             @RequestHeader("X-Tenant-Id") String tenantId,
             @PathVariable Long scheduleId) {
         return adminEventService.getDashboard(tenantId, scheduleId)
+                .map(ResponseEntity::ok);
+    }
+
+    @Operation(summary = "AI 운영 인사이트", description = "판매 현황을 분석하여 위험도, 인사이트, 추천 액션을 제공합니다")
+    @GetMapping("/{scheduleId}/insights")
+    public Mono<ResponseEntity<AdminInsightResponse>> getInsights(
+            @RequestHeader("X-Tenant-Id") String tenantId,
+            @PathVariable Long scheduleId) {
+        return adminInsightService.generateInsights(tenantId, scheduleId)
                 .map(ResponseEntity::ok);
     }
 }
