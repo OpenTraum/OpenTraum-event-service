@@ -103,6 +103,7 @@ public class AiEventGenerateService {
                     .dateTime((String) args.get("dateTime"))
                     .totalSeats(((Number) args.get("totalSeats")).intValue())
                     .trackPolicy((String) args.get("trackPolicy"))
+                    .category((String) args.getOrDefault("category", "OTHER"))
                     .grades(grades)
                     .zones(zones)
                     .build();
@@ -145,6 +146,16 @@ public class AiEventGenerateService {
             - 명시되지 않으면 현재 날짜 기준 1~2개월 후 저녁 7시(19:00)로 설정
             - 반드시 미래 날짜여야 함 (ISO-8601 형식)
 
+            ## 카테고리 자동 분류
+            - 제목, 아티스트, 공연장 정보를 기반으로 적절한 카테고리를 선택
+            - CONCERT: 음악 공연, 콘서트, 라이브
+            - SPORTS: 축구, 야구, 농구, 스포츠 경기
+            - MUSICAL: 뮤지컬, 연극, 오페라
+            - FANMEETING: 팬미팅, 팬사인회
+            - FESTIVAL: 페스티벌, 축제
+            - EXHIBITION: 전시회, 박람회
+            - OTHER: 분류 불가
+
             ## 아티스트
             - 명시되지 않으면 null
 
@@ -171,6 +182,11 @@ public class AiEventGenerateService {
                                     "type", "string",
                                     "enum", List.of("LOTTERY_ONLY", "LIVE_ONLY", "DUAL_TRACK"),
                                     "description", "배정 방식 (100석 이하: LIVE_ONLY, 100~1000: LIVE_ONLY/LOTTERY_ONLY, 1000+: DUAL_TRACK)"
+                            )),
+                            Map.entry("category", Map.of(
+                                    "type", "string",
+                                    "enum", List.of("CONCERT", "SPORTS", "MUSICAL", "FANMEETING", "FESTIVAL", "EXHIBITION", "OTHER"),
+                                    "description", "이벤트 카테고리"
                             )),
                             Map.entry("grades", Map.of(
                                     "type", "array",
@@ -199,7 +215,7 @@ public class AiEventGenerateService {
                                     )
                             ))
                     ),
-                    "required", List.of("title", "venue", "totalSeats", "trackPolicy", "grades", "zones")
+                    "required", List.of("title", "venue", "totalSeats", "trackPolicy", "category", "grades", "zones")
             )
     );
 }

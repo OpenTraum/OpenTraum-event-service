@@ -27,6 +27,8 @@ public class Concert {
 
     private String organizerName;
 
+    private String category;
+
     private String imageUrl;
 
     private LocalDateTime createdAt;

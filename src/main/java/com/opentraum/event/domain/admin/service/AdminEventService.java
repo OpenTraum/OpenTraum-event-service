@@ -38,6 +38,7 @@ public class AdminEventService {
                 .venue(request.getVenue())
                 .tenantId(tenantId)
                 .organizerName(request.getOrganizerName())
+                .category(request.getCategory() != null ? request.getCategory() : "OTHER")
                 .imageUrl(request.getImageUrl())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
@@ -135,6 +136,7 @@ public class AdminEventService {
                                 .venue(concert.getVenue())
                                 .tenantId(concert.getTenantId())
                                 .imageUrl(concert.getImageUrl())
+                                .category(concert.getCategory())
                                 .dateTime(schedule.getDateTime())
                                 .totalSeats(schedule.getTotalSeats())
                                 .ticketOpenAt(schedule.getTicketOpenAt())
@@ -161,6 +163,7 @@ public class AdminEventService {
                             concert.setArtist(request.getArtist());
                             concert.setVenue(request.getVenue());
                             concert.setImageUrl(request.getImageUrl());
+                            if (request.getCategory() != null) concert.setCategory(request.getCategory());
                             concert.setUpdatedAt(LocalDateTime.now());
 
                             schedule.setDateTime(request.getDateTime());
@@ -243,6 +246,7 @@ public class AdminEventService {
                 .venue(concert.getVenue())
                 .tenantId(concert.getTenantId())
                 .imageUrl(concert.getImageUrl())
+                .category(concert.getCategory())
                 .dateTime(schedule.getDateTime())
                 .totalSeats(schedule.getTotalSeats())
                 .ticketOpenAt(schedule.getTicketOpenAt())
