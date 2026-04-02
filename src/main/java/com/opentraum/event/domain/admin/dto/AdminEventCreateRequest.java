@@ -33,6 +33,7 @@ public class AdminEventCreateRequest {
 
     private String imageUrl;
     private String organizerName;
+    private String category;
 
     @NotEmpty
     private List<GradeInput> grades;

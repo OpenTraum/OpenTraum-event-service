@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS concerts (
     venue       VARCHAR(255)    NOT NULL,
     tenant_id   VARCHAR(64)     NOT NULL,
     organizer_name VARCHAR(100),
+    category    VARCHAR(30)     DEFAULT 'OTHER',
     image_url   TEXT,
     created_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP

@@ -16,6 +16,7 @@ public class AiGenerateResponse {
     private String dateTime;
     private Integer totalSeats;
     private String trackPolicy;
+    private String category;
     private List<GradeConfig> grades;
     private List<ZoneConfig> zones;
 

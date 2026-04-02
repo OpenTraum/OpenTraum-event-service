@@ -20,6 +20,7 @@ public class ConcertResponse {
     private String tenantId;
     private String organizerName;
     private String image;
+    private String category;
     private String saleStatus;   // "on-sale" / "coming-soon" / "sold-out"
     private String saleDate;     // UPCOMING일 때만, ISO-8601 (null 가능)
     private List<ScheduleResponse> dates;
