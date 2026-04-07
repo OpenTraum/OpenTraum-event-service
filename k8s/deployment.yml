@@ -41,6 +41,17 @@ spec:
               value: "opentraum"
             - name: DB_PASSWORD
               value: "opentraum"
+            - name: SPRING_R2DBC_URL
+              value: "r2dbc:postgresql://opentraum-postgres:5432/opentraum_event"
+            - name: SPRING_R2DBC_USERNAME
+              value: "opentraum"
+            - name: SPRING_R2DBC_PASSWORD
+              value: "opentraum"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: opentraum-secrets
+                  key: OPENAI_API_KEY
             - name: JAVA_OPTS
               value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
           resources:
