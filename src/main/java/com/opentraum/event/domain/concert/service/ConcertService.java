@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +73,7 @@ public class ConcertService {
                         .date(s.getDateTime().format(DATE_FORMAT))
                         .time(s.getDateTime().format(TIME_FORMAT))
                         .venue(concert.getVenue())
-                        .available(ScheduleStatus.OPEN.name().equals(s.getStatus()))
+                        .available(isScheduleAvailable(s))
                         .build())
                 .collect(Collectors.toList());
 
@@ -111,17 +112,26 @@ public class ConcertService {
                         .build());
     }
 
+    private boolean isScheduleAvailable(Schedule s) {
+        String status = s.getStatus();
+        if (ScheduleStatus.CLOSED.name().equals(status) || ScheduleStatus.COMPLETED.name().equals(status)) {
+            return false;
+        }
+        return s.getTicketOpenAt() != null && !LocalDateTime.now().isBefore(s.getTicketOpenAt());
+    }
+
     private String deriveSaleStatus(List<Schedule> schedules) {
         if (schedules.isEmpty()) return "sold-out";
-        boolean anyOpen = schedules.stream().anyMatch(s -> ScheduleStatus.OPEN.name().equals(s.getStatus()));
-        boolean allUpcoming = schedules.stream().allMatch(s -> ScheduleStatus.UPCOMING.name().equals(s.getStatus()));
+        boolean anyAvailable = schedules.stream().anyMatch(this::isScheduleAvailable);
         boolean allClosedOrCompleted = schedules.stream().allMatch(s ->
                 ScheduleStatus.CLOSED.name().equals(s.getStatus())
                         || ScheduleStatus.COMPLETED.name().equals(s.getStatus()));
-        if (anyOpen) return "on-sale";
-        if (allUpcoming) return "coming-soon";
+        if (anyAvailable) return "on-sale";
         if (allClosedOrCompleted) return "sold-out";
-        return "on-sale"; // mixed
+        boolean allNotYetOpen = schedules.stream().noneMatch(this::isScheduleAvailable)
+                && !allClosedOrCompleted;
+        if (allNotYetOpen) return "coming-soon";
+        return "on-sale";
     }
 
     private String deriveSaleDate(List<Schedule> schedules) {
@@ -134,7 +144,7 @@ public class ConcertService {
 
     private Schedule chooseReferenceScheduleForGrades(List<Schedule> schedules) {
         return schedules.stream()
-                .filter(s -> ScheduleStatus.OPEN.name().equals(s.getStatus()))
+                .filter(this::isScheduleAvailable)
                 .findFirst()
                 .or(() -> schedules.stream()
                         .filter(s -> ScheduleStatus.UPCOMING.name().equals(s.getStatus()))
