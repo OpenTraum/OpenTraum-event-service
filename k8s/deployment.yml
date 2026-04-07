@@ -41,12 +41,14 @@ spec:
               value: "opentraum"
             - name: DB_PASSWORD
               value: "opentraum"
+            - name: JAVA_OPTS
+              value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
           resources:
             requests:
-              memory: "128Mi"
+              memory: "256Mi"
               cpu: "250m"
             limits:
-              memory: "256Mi"
+              memory: "512Mi"
               cpu: "500m"
           livenessProbe:
             httpGet:
