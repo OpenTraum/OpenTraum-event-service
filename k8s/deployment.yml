@@ -31,8 +31,16 @@ spec:
             - configMapRef:
                 name: opentraum-config
           env:
-            - name: SPRING_DATASOURCE_URL
-              value: "jdbc:postgresql://opentraum-postgres:5432/opentraum_event"
+            - name: DB_HOST
+              value: "opentraum-postgres"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_NAME
+              value: "opentraum_event"
+            - name: DB_USERNAME
+              value: "opentraum"
+            - name: DB_PASSWORD
+              value: "opentraum"
           resources:
             requests:
               memory: "128Mi"
