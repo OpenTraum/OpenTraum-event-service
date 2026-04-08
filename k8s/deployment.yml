@@ -25,7 +25,7 @@ spec:
         - name: harbor-secret
       containers:
         - name: event-service
-          image: amdp-registry.skala-ai.com/skala26a-cloud/opentraum-event-service:67cb9f9f3c8938fe19170eb585e90b077ac47428
+          image: amdp-registry.skala-ai.com/skala26a-cloud/opentraum-event-service:b2806042bc9def247d1aab478a8b7323af364f99
           ports:
             - containerPort: 8083
               protocol: TCP
