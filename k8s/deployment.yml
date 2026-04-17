@@ -8,7 +8,6 @@ metadata:
     app.kubernetes.io/part-of: opentraum
     app.kubernetes.io/component: event
 spec:
-  revisionHistoryLimit: 2
   replicas: 1
   selector:
     matchLabels:
@@ -23,9 +22,36 @@ spec:
       terminationGracePeriodSeconds: 10
       imagePullSecrets:
         - name: harbor-secret
+      priorityClassName: opentraum-medium
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 80
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - reservation-service
+                        - payment-service
+                        - event-service
+                topologyKey: kubernetes.io/hostname
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - event-service
+                topologyKey: kubernetes.io/hostname
       containers:
         - name: event-service
-          image: amdp-registry.skala-ai.com/skala26a-cloud/opentraum-event-service:d40d280c911a81f6fa861c2070ef74fb53f6782b
+          image: amdp-registry.skala-ai.com/skala26a-cloud/opentraum-event-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8083
               protocol: TCP
@@ -34,21 +60,21 @@ spec:
                 name: opentraum-config
           env:
             - name: DB_HOST
-              value: "opentraum-postgres"
+              value: "opentraum-mariadb.mariadb"
             - name: DB_PORT
-              value: "5432"
+              value: "3306"
             - name: DB_NAME
               value: "opentraum_event"
             - name: DB_USERNAME
               value: "opentraum"
             - name: DB_PASSWORD
-              value: "opentraum"
+              value: "opentraum123!"
             - name: SPRING_R2DBC_URL
-              value: "r2dbc:postgresql://opentraum-postgres:5432/opentraum_event"
+              value: "r2dbc:mysql://opentraum-mariadb.mariadb:3306/opentraum_event"
             - name: SPRING_R2DBC_USERNAME
               value: "opentraum"
             - name: SPRING_R2DBC_PASSWORD
-              value: "opentraum"
+              value: "opentraum123!"
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -60,11 +86,11 @@ spec:
               value: "true"
           resources:
             requests:
-              memory: "256Mi"
+              memory: "768Mi"
               cpu: "500m"
             limits:
-              memory: "512Mi"
-              cpu: "1000m"
+              memory: "768Mi"
+              cpu: "500m"
           startupProbe:
             httpGet:
               path: /actuator/health
