@@ -6,9 +6,9 @@ spring:
     name: opentraum-event-service
 
   r2dbc:
-    url: r2dbc:postgresql://localhost:5432/opentraum_event
+    url: r2dbc:mysql://${DB_HOST:opentraum-mariadb}:${DB_PORT:3306}/${DB_NAME:opentraum_event}
     username: ${DB_USERNAME:opentraum}
-    password: ${DB_PASSWORD:opentraum}
+    password: ${DB_PASSWORD:opentraum123!}
     pool:
       initial-size: 5
       max-size: 20
@@ -62,7 +62,7 @@ spring:
       on-profile: prod
 
   r2dbc:
-    url: r2dbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:opentraum_event}
+    url: r2dbc:mysql://${DB_HOST:opentraum-mariadb}:${DB_PORT:3306}/${DB_NAME:opentraum_event}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
