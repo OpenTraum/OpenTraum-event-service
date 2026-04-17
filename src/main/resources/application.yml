@@ -6,7 +6,7 @@ spring:
     name: opentraum-event-service
 
   r2dbc:
-    url: r2dbc:mariadb://${DB_HOST:opentraum-mariadb}:${DB_PORT:3306}/${DB_NAME:opentraum_event}
+    url: r2dbc:mysql://${DB_HOST:opentraum-mariadb}:${DB_PORT:3306}/${DB_NAME:opentraum_event}
     username: ${DB_USERNAME:opentraum}
     password: ${DB_PASSWORD:opentraum123!}
     pool:
@@ -62,7 +62,7 @@ spring:
       on-profile: prod
 
   r2dbc:
-    url: r2dbc:mariadb://${DB_HOST:opentraum-mariadb}:${DB_PORT:3306}/${DB_NAME:opentraum_event}
+    url: r2dbc:mysql://${DB_HOST:opentraum-mariadb}:${DB_PORT:3306}/${DB_NAME:opentraum_event}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
