@@ -46,3 +46,6 @@ out/
 ### Logs ###
 logs/
 *.log
+
+### Local scripts ###
+docker-build.sh
