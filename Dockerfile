@@ -1,44 +1,26 @@
-# === Build Stage (네이티브 플랫폼에서 실행, QEMU 에뮬레이션 없음) ===
-FROM --platform=$BUILDPLATFORM gradle:8.12-jdk21-alpine AS builder
+# syntax=docker/dockerfile:1.6
+# --- Build Stage ---
+FROM --platform=$BUILDPLATFORM eclipse-temurin:21-jdk AS build
+WORKDIR /workspace
 
-WORKDIR /app
-
-COPY build.gradle settings.gradle ./
 COPY gradle ./gradle
-
-RUN --mount=type=cache,target=/home/gradle/.gradle \
-    gradle dependencies --no-daemon || true
+COPY gradlew build.gradle settings.gradle ./
+RUN chmod +x gradlew
+RUN --mount=type=cache,target=/root/.gradle ./gradlew dependencies --no-daemon || true
 
 COPY src ./src
+RUN --mount=type=cache,target=/root/.gradle ./gradlew bootJar --no-daemon -x test
 
-RUN --mount=type=cache,target=/home/gradle/.gradle \
-    gradle bootJar --no-daemon -x test
-
-# === Layer Extraction Stage ===
-FROM eclipse-temurin:21-jre-alpine AS extractor
-WORKDIR /app
-COPY --from=builder /app/build/libs/*.jar app.jar
-RUN java -Djarmode=layertools -jar app.jar extract
-
-# === Runtime Stage ===
-FROM bellsoft/liberica-openjre-alpine:21
-
+# --- Runtime Stage ---
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
-COPY --from=extractor /app/dependencies/ ./
-COPY --from=extractor /app/spring-boot-loader/ ./
-COPY --from=extractor /app/snapshot-dependencies/ ./
-COPY --from=extractor /app/application/ ./
-
-RUN chown -R appuser:appgroup /app
+COPY --from=build /workspace/build/libs/*.jar /app/app.jar
+RUN chown appuser:appgroup /app/app.jar
 USER appuser
 
+ENV JAVA_OPTS="-XX:+UseZGC -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
 EXPOSE 8083
 
-ENTRYPOINT ["java", \
-    "-XX:+UseZGC", \
-    "-XX:MaxRAMPercentage=75.0", \
-    "-Djava.security.egd=file:/dev/./urandom", \
-    "org.springframework.boot.loader.launch.JarLauncher"]
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]

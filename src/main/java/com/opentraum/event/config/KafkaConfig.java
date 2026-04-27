@@ -33,7 +33,10 @@ public class KafkaConfig {
 
     @Bean
     public KafkaTemplate<String, String> kafkaTemplate() {
-        return new KafkaTemplate<>(producerFactory());
+        KafkaTemplate<String, String> template = new KafkaTemplate<>(producerFactory());
+        // Producer 측 OTel span 생성 + W3C traceparent 헤더 주입.
+        template.setObservationEnabled(true);
+        return template;
     }
 
     @Bean
@@ -42,6 +45,8 @@ public class KafkaConfig {
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        // at-least-once: 수동 커밋. IdempotencyService가 중복 처리를 막는다.
+        config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         return new DefaultKafkaConsumerFactory<>(config);
@@ -52,6 +57,12 @@ public class KafkaConfig {
         ConcurrentKafkaListenerContainerFactory<String, String> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
+        // graceful shutdown: 컨테이너 stop 시 현재 polling이 끝날 때까지 최대 10초 대기.
+        factory.getContainerProperties().setShutdownTimeout(10_000L);
+        factory.getContainerProperties().setAckMode(
+                org.springframework.kafka.listener.ContainerProperties.AckMode.RECORD);
+        // Consumer 측 OTel span 생성 + traceparent 헤더 복원.
+        factory.getContainerProperties().setObservationEnabled(true);
         return factory;
     }
 }
