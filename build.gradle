@@ -41,6 +41,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 
+    // OpenTelemetry Tracing (W3C propagation -> Grafana Alloy)
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+
     // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 

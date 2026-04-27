@@ -13,6 +13,7 @@ public class SeatInfo {
     private String seatNumber;
     private String grade;
     private String status;
+    private Integer price;
 
     public static SeatInfo from(Seat seat) {
         return SeatInfo.builder()
@@ -22,6 +23,7 @@ public class SeatInfo {
                 .seatNumber(seat.getSeatNumber())
                 .grade(seat.getGrade())
                 .status(seat.getStatus())
+                .price(seat.getPrice())
                 .build();
     }
 }
