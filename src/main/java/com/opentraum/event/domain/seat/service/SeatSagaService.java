@@ -1,5 +1,6 @@
 package com.opentraum.event.domain.seat.service;
 
+import com.opentraum.event.domain.concert.repository.ScheduleRepository;
 import com.opentraum.event.domain.outbox.service.OutboxService;
 import com.opentraum.event.domain.seat.dto.SeatKey;
 import com.opentraum.event.domain.seat.entity.Seat;
@@ -43,6 +44,7 @@ public class SeatSagaService {
     private final SeatRepository seatRepository;
     private final ReactiveRedisTemplate<String, String> redisTemplate;
     private final OutboxService outboxService;
+    private final ScheduleRepository scheduleRepository;
 
     /**
      * 배치 HOLD. Redis SETNX + DB status=HELD + Outbox SeatHeld.
@@ -286,7 +288,14 @@ public class SeatSagaService {
         payload.put("schedule_id", scheduleId);
         payload.put("seats", toSeatJson(acquired));
         payload.put("held_until", HELD_UNTIL_FORMAT.format(heldUntil));
-        return outboxService.publish(reservationId, AGGREGATE_TYPE, "SeatHeld", sagaId, payload).then();
+        // 멀티테넌시 전파: schedule.tenant_id를 SeatHeld payload에 자동 머지
+        return scheduleRepository.findById(scheduleId)
+                .flatMap(schedule -> {
+                    payload.put("tenant_id", schedule.getTenantId());
+                    return outboxService.publish(reservationId, AGGREGATE_TYPE, "SeatHeld", sagaId, payload);
+                })
+                .switchIfEmpty(outboxService.publish(reservationId, AGGREGATE_TYPE, "SeatHeld", sagaId, payload).then(Mono.empty()))
+                .then();
     }
 
     private Mono<Void> compensateHold(Long scheduleId, Long reservationId, String sagaId,

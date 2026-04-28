@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 public class ScheduleInfo {
     private Long id;
     private Long concertId;
+    private String tenantId;
     private LocalDateTime ticketOpenAt;
     private String status;
     private String trackPolicy;
@@ -19,6 +20,7 @@ public class ScheduleInfo {
         return ScheduleInfo.builder()
                 .id(schedule.getId())
                 .concertId(schedule.getConcertId())
+                .tenantId(schedule.getTenantId())
                 .ticketOpenAt(schedule.getTicketOpenAt())
                 .status(schedule.getStatus())
                 .trackPolicy(schedule.getTrackPolicy())

@@ -19,6 +19,8 @@ public class Schedule {
 
     private Long concertId;
 
+    private String tenantId;
+
     private LocalDateTime dateTime;
 
     private Integer totalSeats;

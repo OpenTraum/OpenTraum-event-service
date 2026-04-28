@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS concerts (
 CREATE TABLE IF NOT EXISTS schedules (
     id              BIGINT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
     concert_id      BIGINT          NOT NULL,
+    tenant_id       VARCHAR(64)     NOT NULL DEFAULT 'default',
     date_time       TIMESTAMP       NOT NULL,
     total_seats     INT             NOT NULL,
     ticket_open_at  TIMESTAMP       NOT NULL,
@@ -30,6 +31,7 @@ CREATE TABLE IF NOT EXISTS schedules (
     track_policy    VARCHAR(20)     NOT NULL DEFAULT 'DUAL_TRACK',
     created_at      TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_schedules_concert (concert_id),
+    INDEX idx_schedules_tenant (tenant_id),
     FOREIGN KEY (concert_id) REFERENCES concerts(id)
 );
 
