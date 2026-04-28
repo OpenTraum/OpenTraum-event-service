@@ -48,6 +48,7 @@ public class AdminEventService {
                 .flatMap(savedConcert -> {
                     Schedule schedule = Schedule.builder()
                             .concertId(savedConcert.getId())
+                            .tenantId(tenantId)
                             .dateTime(request.getDateTime())
                             .totalSeats(request.getTotalSeats())
                             .ticketOpenAt(request.getTicketOpenAt())
