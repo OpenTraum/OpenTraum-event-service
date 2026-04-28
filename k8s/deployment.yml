@@ -60,7 +60,7 @@ spec:
               app.kubernetes.io/part-of: opentraum
       containers:
         - name: event-service
-          image: amdp-registry.skala-ai.com/skala26a-cloud/opentraum-event-service:e73c548ccf65926e082181b57ed82fb5aa927a9e
+          image: amdp-registry.skala-ai.com/skala26a-cloud/opentraum-event-service:0475d7d4448a639053b9324432650d7ffca94b3d
           imagePullPolicy: Always
           ports:
             - containerPort: 8083
