@@ -33,10 +33,7 @@ public class KafkaConfig {
 
     @Bean
     public KafkaTemplate<String, String> kafkaTemplate() {
-        KafkaTemplate<String, String> template = new KafkaTemplate<>(producerFactory());
-        // Producer 측 OTel span 생성 + W3C traceparent 헤더 주입.
-        template.setObservationEnabled(true);
-        return template;
+        return new KafkaTemplate<>(producerFactory());
     }
 
     @Bean
@@ -61,8 +58,6 @@ public class KafkaConfig {
         factory.getContainerProperties().setShutdownTimeout(10_000L);
         factory.getContainerProperties().setAckMode(
                 org.springframework.kafka.listener.ContainerProperties.AckMode.RECORD);
-        // Consumer 측 OTel span 생성 + traceparent 헤더 복원.
-        factory.getContainerProperties().setObservationEnabled(true);
         return factory;
     }
 }
