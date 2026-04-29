@@ -4,6 +4,7 @@ import com.opentraum.event.domain.internal.dto.GradeSeatCountResponse;
 import com.opentraum.event.domain.internal.dto.SeatHoldRequest;
 import com.opentraum.event.domain.internal.dto.SeatHoldResponse;
 import com.opentraum.event.domain.internal.dto.SeatInfo;
+import com.opentraum.event.domain.seat.entity.SeatStatus;
 import com.opentraum.event.domain.seat.repository.SeatRepository;
 import com.opentraum.event.domain.seat.service.SeatSagaService;
 import com.opentraum.event.global.exception.BusinessException;
@@ -21,6 +22,7 @@ import reactor.core.publisher.Mono;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -50,24 +52,51 @@ public class InternalSeatController {
     }
 
     /**
-     * @deprecated SAGA 전환 이후 좌석 상태는 Kafka 이벤트(ReservationCreated / PaymentCompleted /
-     * PaymentFailed 등)로만 변경한다. 이 REST 엔드포인트는 호환성 유지용으로만 남아있으며 Wave 3에서
-     * 제거 예정.
+     * 호환용 좌석 HOLD 해제 API.
+     *
+     * <p>신규 HOLD/SOLD 상태 전이는 SAGA 경로에서 처리한다. 이 엔드포인트는 기존 내부 호출자의
+     * HELD 좌석 해제 요청만 제한적으로 허용한다.
      */
-    @Deprecated
-    @Operation(summary = "[Deprecated] 좌석 상태 변경 — SAGA 이벤트 기반으로 전환됨",
-            description = "SAGA 전환 이후 직접 호출 금지. Kafka 이벤트로만 상태 전이.")
+    @Operation(summary = "좌석 HOLD 해제",
+            description = "기존 내부 호출자 호환용 API. status=AVAILABLE 요청만 허용하며 HELD 좌석만 해제한다.")
     @PutMapping("/status")
     public Mono<ResponseEntity<Void>> updateStatus(
             @RequestParam Long scheduleId,
             @RequestParam String zone,
             @RequestParam String seatNumber,
             @RequestParam String status) {
-        log.warn("[DEPRECATED] /api/v1/internal/seats/status direct call: scheduleId={}, zone={}, seat={}, status={}. "
-                        + "SAGA 전환 이후 이 경로는 제거 대상이다.",
+        log.info("Internal seat release request: scheduleId={}, zone={}, seat={}, status={}",
                 scheduleId, zone, seatNumber, status);
-        return seatRepository.updateStatusByScheduleIdAndZoneAndSeatNumber(status, scheduleId, zone, seatNumber)
-                .then(Mono.just(ResponseEntity.ok().<Void>build()));
+        String targetStatus = status == null ? "" : status.trim().toUpperCase(Locale.ROOT);
+        if (!SeatStatus.AVAILABLE.name().equals(targetStatus)) {
+            log.warn("Internal seat transition rejected: targetStatus={}, scheduleId={}, zone={}, seat={}",
+                    status, scheduleId, zone, seatNumber);
+            return Mono.error(new BusinessException(ErrorCode.INVALID_INPUT));
+        }
+
+        return seatRepository.findByScheduleIdAndZoneAndSeatNumber(scheduleId, zone, seatNumber)
+                .switchIfEmpty(Mono.error(new BusinessException(ErrorCode.NO_AVAILABLE_SEATS)))
+                .flatMap(seatSagaService::reconcileExpiredHold)
+                .flatMap(seat -> {
+                    if (SeatStatus.AVAILABLE.name().equals(seat.getStatus())) {
+                        return Mono.just(ResponseEntity.ok().<Void>build());
+                    }
+                    if (!SeatStatus.HELD.name().equals(seat.getStatus())) {
+                        log.warn("Internal seat release rejected from status={}: scheduleId={}, zone={}, seat={}",
+                                seat.getStatus(), scheduleId, zone, seatNumber);
+                        return Mono.error(new BusinessException(ErrorCode.INVALID_INPUT));
+                    }
+                    return seatRepository.releaseHeldByCoordinate(scheduleId, zone, seatNumber)
+                            .flatMap(rows -> {
+                                if (rows > 0) {
+                                    return Mono.just(ResponseEntity.ok().<Void>build());
+                                }
+                                return seatRepository.findByScheduleIdAndZoneAndSeatNumber(scheduleId, zone, seatNumber)
+                                        .flatMap(latest -> SeatStatus.AVAILABLE.name().equals(latest.getStatus())
+                                                ? Mono.just(ResponseEntity.ok().<Void>build())
+                                                : Mono.error(new BusinessException(ErrorCode.INVALID_INPUT)));
+                            });
+                });
     }
 
     @Operation(summary = "등급별 좌석 수")
