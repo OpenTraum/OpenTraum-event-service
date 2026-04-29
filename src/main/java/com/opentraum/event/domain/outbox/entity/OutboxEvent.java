@@ -46,9 +46,6 @@ public class OutboxEvent {
 
     private String payload;
 
-    @Column("trace_id")
-    private String traceId;
-
     @Column("occurred_at")
     private LocalDateTime occurredAt;
 }
