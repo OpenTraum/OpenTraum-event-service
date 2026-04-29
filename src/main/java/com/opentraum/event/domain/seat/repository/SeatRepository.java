@@ -114,6 +114,28 @@ public interface SeatRepository extends ReactiveCrudRepository<Seat, Long> {
             @Param("reservationId") Long reservationId);
 
     /**
+     * Legacy 내부 API용 HELD -> AVAILABLE 전이.
+     *
+     * <p>reservation_id 를 모르는 구형 호출자는 SOLD 전이나 HELD 생성에 사용할 수 없고,
+     * HELD 해제만 멱등적으로 허용한다.
+     */
+    @Modifying
+    @Query("""
+            UPDATE seats
+               SET status = 'AVAILABLE',
+                   held_until = NULL,
+                   reservation_id = NULL
+             WHERE schedule_id = :scheduleId
+               AND zone = :zone
+               AND seat_number = :seatNumber
+               AND status = 'HELD'
+            """)
+    Mono<Integer> releaseHeldByCoordinate(
+            @Param("scheduleId") Long scheduleId,
+            @Param("zone") String zone,
+            @Param("seatNumber") String seatNumber);
+
+    /**
      * reservation_id 로 점유된 전체 좌석 조회 (release 보상 시 좌석 좌표를 모를 때).
      */
     Flux<Seat> findByReservationId(Long reservationId);
