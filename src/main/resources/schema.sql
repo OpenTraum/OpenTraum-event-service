@@ -102,12 +102,10 @@ CREATE TABLE IF NOT EXISTS outbox_events (
     event_type VARCHAR(64) NOT NULL,
     saga_id CHAR(36) NOT NULL,
     payload JSON NOT NULL,
-    trace_id CHAR(32) NULL,
     occurred_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     INDEX idx_outbox_aggregate (aggregate_type, aggregate_id),
     INDEX idx_outbox_saga (saga_id),
-    INDEX idx_outbox_occurred (occurred_at),
-    INDEX idx_outbox_trace (trace_id)
+    INDEX idx_outbox_occurred (occurred_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- processed_events: Consumer 멱등성
