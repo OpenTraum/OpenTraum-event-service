@@ -23,8 +23,6 @@ spec:
         app.kubernetes.io/component: event
     spec:
       terminationGracePeriodSeconds: 30
-      imagePullSecrets:
-        - name: harbor-secret
       priorityClassName: opentraum-medium
       affinity:
         podAffinity:
@@ -60,7 +58,7 @@ spec:
               app.kubernetes.io/part-of: opentraum
       containers:
         - name: event-service
-          image: amdp-registry.skala-ai.com/skala26a-cloud/opentraum-event-service:d8fec8a553c31b2f0c7ed0d543f8e8536e86f7c1
+          image: 881490135253.dkr.ecr.ap-northeast-2.amazonaws.com/skala3-cloud1-team8-opentraum-event-service:d8fec8a553c31b2f0c7ed0d543f8e8536e86f7c1
           imagePullPolicy: Always
           ports:
             - containerPort: 8083
