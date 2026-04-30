@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -80,29 +81,20 @@ public class AiEventGenerateService {
 
             Map<String, Object> args = objectMapper.readValue(arguments, new TypeReference<>() {});
 
-            List<AiGenerateResponse.GradeConfig> grades = ((List<Map<String, Object>>) args.get("grades")).stream()
-                    .map(g -> AiGenerateResponse.GradeConfig.builder()
-                            .grade((String) g.get("grade"))
-                            .price(((Number) g.get("price")).intValue())
-                            .seatCount(((Number) g.get("seatCount")).intValue())
-                            .build())
-                    .toList();
-
-            List<AiGenerateResponse.ZoneConfig> zones = ((List<Map<String, Object>>) args.get("zones")).stream()
-                    .map(z -> AiGenerateResponse.ZoneConfig.builder()
-                            .zone((String) z.get("zone"))
-                            .grade((String) z.get("grade"))
-                            .seatCount(((Number) z.get("seatCount")).intValue())
-                            .build())
-                    .toList();
+            // [Hybrid 후처리] AI는 자연어 분류·생성 담당, 수치 룰은 Java가 강제 보정
+            // — 4B 모델 numerical reasoning 약점을 도메인 룰로 100% 보장
+            int total = ((Number) args.get("totalSeats")).intValue();
+            List<AiGenerateResponse.GradeConfig> grades = normalizeGrades(total);
+            List<AiGenerateResponse.ZoneConfig> zones = normalizeZones(grades);
+            String trackPolicy = fixTrackPolicy((String) args.get("trackPolicy"), total);
 
             return AiGenerateResponse.builder()
                     .title((String) args.get("title"))
                     .artist((String) args.get("artist"))
                     .venue((String) args.get("venue"))
                     .dateTime((String) args.get("dateTime"))
-                    .totalSeats(((Number) args.get("totalSeats")).intValue())
-                    .trackPolicy((String) args.get("trackPolicy"))
+                    .totalSeats(total)
+                    .trackPolicy(trackPolicy)
                     .category((String) args.getOrDefault("category", "OTHER"))
                     .grades(grades)
                     .zones(zones)
@@ -111,6 +103,62 @@ public class AiEventGenerateService {
             log.error("OpenAI 응답 파싱 실패: {}", response, e);
             throw new BusinessException(ErrorCode.INTERNAL_ERROR);
         }
+    }
+
+    /** trackPolicy 후처리 — totalSeats 기반 강제 분기. 1000+은 항상 DUAL_TRACK. */
+    private String fixTrackPolicy(String original, int total) {
+        if (total <= 100) return "LIVE_ONLY";
+        if (total >= 1000) return "DUAL_TRACK";
+        if ("LIVE_ONLY".equals(original) || "LOTTERY_ONLY".equals(original)) return original;
+        return "LOTTERY_ONLY";
+    }
+
+    /** grades 룰 기반 재구성 — totalSeats 구간별로 등급/비율/가격 강제.
+     * AI 응답의 grades 배열은 무시하고 도메인 룰로 덮어쓴다. */
+    private List<AiGenerateResponse.GradeConfig> normalizeGrades(int total) {
+        record Tier(String name, double ratio, int price) {}
+        List<Tier> tiers;
+        if (total >= 1000) {
+            tiers = List.of(
+                    new Tier("VIP", 0.10, 165000),
+                    new Tier("R", 0.20, 120000),
+                    new Tier("S", 0.35, 90000),
+                    new Tier("A", 0.35, 60000));
+        } else if (total >= 300) {
+            tiers = List.of(
+                    new Tier("VIP", 0.15, 165000),
+                    new Tier("S", 0.40, 90000),
+                    new Tier("A", 0.45, 60000));
+        } else if (total >= 100) {
+            tiers = List.of(
+                    new Tier("S", 0.40, 90000),
+                    new Tier("A", 0.60, 60000));
+        } else {
+            tiers = List.of(new Tier("전석", 1.0, 60000));
+        }
+
+        List<AiGenerateResponse.GradeConfig> result = new ArrayList<>();
+        int remaining = total;
+        for (int i = 0; i < tiers.size(); i++) {
+            Tier t = tiers.get(i);
+            // 마지막 등급에 반올림 오차 흡수 → Σ = totalSeats 정확 일치
+            int count = (i == tiers.size() - 1) ? remaining : (int) Math.round(total * t.ratio());
+            if (i < tiers.size() - 1) remaining -= count;
+            result.add(AiGenerateResponse.GradeConfig.builder()
+                    .grade(t.name()).price(t.price()).seatCount(count).build());
+        }
+        return result;
+    }
+
+    /** zones — grades 1:1 매핑 (등급별 1구역). Σzones.seatCount = totalSeats 보장. */
+    private List<AiGenerateResponse.ZoneConfig> normalizeZones(List<AiGenerateResponse.GradeConfig> grades) {
+        return grades.stream()
+                .map(g -> AiGenerateResponse.ZoneConfig.builder()
+                        .zone(g.getGrade() + "구역")
+                        .grade(g.getGrade())
+                        .seatCount(g.getSeatCount())
+                        .build())
+                .toList();
     }
 
     private static final String SYSTEM_PROMPT = """
