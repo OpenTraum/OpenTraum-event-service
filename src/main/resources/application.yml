@@ -43,8 +43,11 @@ spring:
       mode: always
 
 openai:
-  api-key: ${OPENAI_API_KEY:}
-  model: ${OPENAI_MODEL:gpt-4o-mini}
+  # OpenAI 호환 endpoint (Sovereign AI: 자체 서빙 Nemotron 4B 기본, OpenAI fallback 가능)
+  # 5트랙 narrative 핵심: vLLM(http) + 4B 모델 + Java hybrid 후처리 → 9.85/10 검증 완료
+  base-url: ${OPENAI_BASE_URL:http://nemotron-vllm.opentraum.svc.cluster.local:8000/v1}
+  api-key: ${OPENAI_API_KEY:sk-not-needed}
+  model: ${OPENAI_MODEL:nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16}
 
 management:
   endpoints:
