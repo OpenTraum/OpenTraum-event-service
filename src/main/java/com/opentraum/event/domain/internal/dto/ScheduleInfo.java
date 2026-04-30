@@ -15,6 +15,7 @@ public class ScheduleInfo {
     private LocalDateTime ticketOpenAt;
     private String status;
     private String trackPolicy;
+    private Integer totalSeats;
 
     public static ScheduleInfo from(Schedule schedule) {
         return ScheduleInfo.builder()
@@ -24,6 +25,7 @@ public class ScheduleInfo {
                 .ticketOpenAt(schedule.getTicketOpenAt())
                 .status(schedule.getStatus())
                 .trackPolicy(schedule.getTrackPolicy())
+                .totalSeats(schedule.getTotalSeats())
                 .build();
     }
 }
