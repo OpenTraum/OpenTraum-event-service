@@ -58,7 +58,7 @@ spec:
               app.kubernetes.io/part-of: opentraum
       containers:
         - name: event-service
-          image: 881490135253.dkr.ecr.ap-northeast-2.amazonaws.com/skala3-cloud1-team8-opentraum-event-service:be8ba8dd5e48804d0a83643180ee5c09422ffb74
+          image: 881490135253.dkr.ecr.ap-northeast-2.amazonaws.com/skala3-cloud1-team8-opentraum-event-service:0cc77b8f2b2b1f24786d9fadb2bb7099e702c565
           imagePullPolicy: Always
           ports:
             - containerPort: 8083
