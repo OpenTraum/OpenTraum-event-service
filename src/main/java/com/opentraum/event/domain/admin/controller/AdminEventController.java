@@ -4,6 +4,7 @@ import com.opentraum.event.domain.admin.dto.*;
 import com.opentraum.event.domain.admin.service.AdminEventService;
 import com.opentraum.event.domain.admin.service.AdminInsightService;
 import com.opentraum.event.domain.admin.service.AiEventGenerateService;
+import com.opentraum.event.domain.admin.service.EventCoverGenerateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -23,11 +24,21 @@ public class AdminEventController {
     private final AiEventGenerateService aiEventGenerateService;
     private final AdminEventService adminEventService;
     private final AdminInsightService adminInsightService;
+    private final EventCoverGenerateService eventCoverGenerateService;
 
     @Operation(summary = "AI 이벤트 구성 자동 생성")
     @PostMapping("/ai-generate")
     public Mono<ResponseEntity<AiGenerateResponse>> aiGenerate(@Valid @RequestBody AiGenerateRequest request) {
         return aiEventGenerateService.generate(request.getPrompt())
+                .map(ResponseEntity::ok);
+    }
+
+    @Operation(summary = "이벤트 커버 이미지 자동 생성",
+            description = "이벤트 메타로 Nemotron tool call → flux-image 추론 → S3 업로드. 실패 시 카테고리별 default banner 폴백")
+    @PostMapping("/cover/generate")
+    public Mono<ResponseEntity<CoverGenerateResponse>> generateCover(
+            @Valid @RequestBody CoverGenerateRequest request) {
+        return eventCoverGenerateService.generate(request)
                 .map(ResponseEntity::ok);
     }
 
