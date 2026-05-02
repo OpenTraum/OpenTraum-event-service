@@ -89,6 +89,22 @@ spec:
                   name: opentraum-secrets
                   key: OPENAI_API_KEY
                   optional: true
+            - name: FLUX_BASE_URL
+              value: "http://flux-image.opentraum.svc.cluster.local:8000"
+            - name: S3_BUCKET
+              value: "opentraum-assets"
+            - name: AWS_REGION
+              value: "ap-northeast-2"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: event-aws-credentials
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: event-aws-credentials
+                  key: AWS_SECRET_ACCESS_KEY
             - name: JAVA_OPTS
               value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+TieredCompilation -XX:TieredStopAtLevel=1"
             - name: SPRING_MAIN_LAZY_INITIALIZATION

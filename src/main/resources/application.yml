@@ -49,6 +49,21 @@ openai:
   api-key: ${OPENAI_API_KEY:sk-not-needed}
   model: ${OPENAI_MODEL:nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16}
 
+# Track 4 — flux-image / S3 cover 자동 생성
+flux:
+  base-url: ${FLUX_BASE_URL:http://flux-image.opentraum.svc.cluster.local:8000}
+  width: ${FLUX_WIDTH:1024}
+  height: ${FLUX_HEIGHT:576}
+  steps: ${FLUX_STEPS:4}
+  guidance: ${FLUX_GUIDANCE:0.0}
+  candidates: ${FLUX_CANDIDATES:3}
+  request-timeout-seconds: ${FLUX_TIMEOUT_SEC:60}
+
+s3:
+  region: ${AWS_REGION:ap-northeast-2}
+  bucket: ${S3_BUCKET:opentraum-assets}
+  presign-hours: ${S3_PRESIGN_HOURS:24}
+
 management:
   endpoints:
     web:
